@@ -1,68 +1,149 @@
 # Sparse Mixture-of-Experts Routing for Molecular Property Prediction
 
-Code, experiments, and analysis for the manuscript:
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21827442.svg)](https://doi.org/10.5281/zenodo.21827442)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10-blue.svg)]()
 
-**"Sparse mixture-of-experts routing spontaneously partitions chemical space along physicochemical axes for molecular property prediction"**
-Saptasamudra Gogoi, Yuquan Li — submitted to *Journal of Cheminformatics*.
+Implementation of sparse Mixture-of-Experts (MoE) routing for graph neural networks applied to molecular property prediction.
+
+The repository contains implementations of GCN, D-MPNN and sparse MoE variants together with benchmarking, parameter-matched ablation studies, expert-specialization analyses, and figure-generation scripts.
 
 ---
 
-## What this is
+# Overview
 
-We attach a sparse top-K mixture-of-experts (MoE) module to standard graph neural network backbones (GCN, GIN, DMPNN) for molecular property prediction. The router receives **no chemical supervision** — no descriptors, no substructure rules, no labels — yet it spontaneously organizes molecules along Lipinski-like physicochemical axes (lipophilicity, aromatic-ring count). We quantify this with mutual information and ANOVA (η² effect sizes) across four independent ADMET datasets, and test whether the routing mechanism itself — rather than simply added parameters — drives any performance difference, using a parameter-matched ablation against equal-capacity dense baselines.
+This project investigates two independent questions:
 
-**The central claim is mechanistic, not a performance claim.** MoE routing improves regression accuracy over a plain GCN backbone (Wilcoxon *P* = 0.025, pooled across 12 datasets), but a parameter-matched ablation shows no significant advantage over equal-capacity dense baselines (*P* = 0.58–0.99). The value of the architecture is the interpretable expert specialization it produces at no accuracy cost — not a benchmark win.
+1. Can sparse MoE routing improve molecular property prediction?
 
-## Repository structure
+2. What chemical organization emerges when sparse routing is learned without explicit chemical supervision?
 
+Unlike previous approaches, the router receives **no**
+
+- molecular descriptors
+- physicochemical properties
+- Lipinski features
+- handcrafted substructures
+- expert labels
+
+Expert assignments emerge entirely through end-to-end optimization.
+
+The repository emphasizes **mechanistic analysis** rather than leaderboard performance.
+
+---
+
+# Features
+
+- Sparse top-K Mixture-of-Experts routing
+- GCN baseline
+- D-MPNN backbone
+- MoleculeNet benchmarks
+- Therapeutics Data Commons (TDC) benchmarks
+- Parameter-matched routing ablations
+- Optuna hyperparameter optimization
+- Statistical significance testing
+- Expert-specialization analysis
+- Figure generation scripts
+- Complete reproducibility pipeline
+
+---
+
+# Repository Structure
+
+```text
+.
+├── attentivefp_moe.py
+├── ablation_routing.py
+├── baselines/
+├── configs/
+├── data/
+├── docs/
+├── figures/
+├── results/
+├── scripts/
+├── requirements.txt
+├── environment.yml
+└── LICENSE
 ```
-molprop_project/
-├── ablation_routing.py          # MoE vs. equal-parameter Dense-uniform / Dense-wide (main ablation)
-├── ablation_optuna.py           # Same comparison with per-mode Optuna HPO (capacity-unconstrained; supplementary only)
-├── attentivefp_moe.py           # MoE-GCN training / evaluation, MoleculeNet + TDC
-├── scripts/multitask_9dataset.py  # Plain multi-task baseline (no MoE), 9 MoleculeNet datasets
-├── make_fig2.py, fig5_ablation.py # Figure generation scripts
-├── DEPRECATED_pharma_cross_arch_ablation.py  # Old pharmacophore-guided routing experiments — NOT part of the current manuscript; kept for archival reference only
-├── results_*.json               # Raw experiment outputs (plain / MoE, per backbone, per task type)
-├── ablation_routing_results.json # Parameter-matched ablation results (5 datasets × 3 modes × 5 seeds)
-└── figures/                     # Publication figures (Figs. 1–6)
-```
 
-## Key results
+---
 
-| Question | Result |
-|---|---|
-| Does MoE improve regression accuracy over plain GCN? | Yes — 10/12 datasets, Wilcoxon *P* = 0.025 (pooled, one-sided) |
-| Does MoE improve classification accuracy? | No significant difference (*P* = 0.94 MoleculeNet classification; *P* = 0.22 all-TDC) |
-| Does the routing *mechanism* (vs. just more parameters) drive the gain? | No — parameter-matched ablation shows no significant difference vs. Dense-uniform or Dense-wide (*P* = 0.58–0.99) |
-| Does routing recover chemically meaningful structure? | Yes — LogP and aromatic-ring count are the dominant axes (η² up to 0.33 and 0.445 respectively), replicated on 3/4 datasets; the 4th (narrow-diversity lipophilicity assay) shows no specialization, consistent with the mechanism requiring chemical diversity |
-| Does MoE transfer to other backbones? | Mixed. DMPNN: improves on ESOL, degrades on FreeSolv and Lipophilicity. GIN transferability has not been tested. |
-
-## Reproducing the main results
+# Installation
 
 ```bash
+git clone https://github.com/Saptasamudra-Gogoi/attentivefp-multitask-admet.git
+
+cd attentivefp-multitask-admet
+
+conda env create -f environment.yml
+
 conda activate moe_admet
-python attentivefp_moe.py          # main MoE-GCN results (Tables 1–2)
-python ablation_routing.py         # parameter-matched ablation (Table 6)
-python sig_test.py                 # significance tests on ablation_routing_results.json
 ```
 
-Hyperparameter search: Optuna, tree-structured Parzen estimator, 30 trials with median pruning, per dataset. All experiments run on a single NVIDIA GTX 1660 Ti (6 GB).
+or
 
-## Data
+```bash
+pip install -r requirements.txt
+```
 
-All datasets are public: [MoleculeNet](https://moleculenet.org) and the [Therapeutics Data Commons](https://tdcommons.ai) ADMET benchmark group. No registration or login required.
+---
 
-## Honesty notes (things this README will not let you miss)
+# Running Experiments
 
-- The plug-in does **not** achieve state-of-the-art accuracy — it is outperformed by AttentiveFP on regression and by GROVER (pretrained) on most tasks.
-- GIN cross-architecture transferability is claimed nowhere in the current manuscript because it has not been tested. Only GCN and DMPNN have real plain-vs-MoE comparisons.
-- `DEPRECATED_pharma_cross_arch_ablation.py` reflects an earlier, abandoned pharmacophore-guided routing approach and is **not** connected to any result in the current manuscript.
+Main benchmark
 
-## Citation
+```bash
+python attentivefp_moe.py
+```
 
-If you use this code, please cite the manuscript (citation to be added on acceptance).
+Parameter-matched ablation
 
-## License
+```bash
+python ablation_routing.py
+```
 
-MIT.
+Statistical analysis
+
+```bash
+python sig_test.py
+```
+
+---
+
+# Datasets
+
+Public datasets used in this repository
+
+- MoleculeNet
+- Therapeutics Data Commons (TDC)
+
+---
+
+# Reproducibility
+
+The repository includes
+
+- training code
+- benchmark scripts
+- raw results
+- statistical analyses
+- figure generation
+- expert-specialization analyses
+
+allowing every major experiment to be reproduced.
+
+---
+
+# Citation
+
+If you use this repository, please cite the accompanying publication once available.
+
+Software DOI
+
+10.5281/zenodo.21827442
+
+---
+
+# License
+
+MIT
