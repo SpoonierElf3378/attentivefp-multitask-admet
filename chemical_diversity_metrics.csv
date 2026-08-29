@@ -1,0 +1,5 @@
+,n_molecules,n_unique_scaffolds,scaffold_to_molecule_ratio,mean_pairwise_tanimoto_distance,sample_size_for_diversity
+solubility_aqsoldb,9982.0,2056.0,0.206,0.9221,999.0
+caco2_wang,910.0,488.0,0.5363,0.8918,910.0
+ld50_zhu,7385.0,1677.0,0.2271,0.9187,1000.0
+lipophilicity_astrazeneca,4200.0,2443.0,0.5817,0.881,1000.0
